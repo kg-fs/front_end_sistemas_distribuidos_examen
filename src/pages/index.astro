@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.tsx';
+import Hero from '../components/Hero.astro';
+import ProductGrid from '../components/ProductGrid.tsx';
+---
+
+<Layout>
+	<Header client:load />
+	<Hero />
+	<main class="min-h-screen">
+		<section class="py-16 bg-white">
+			<div class="max-w-6xl mx-auto px-6">
+				<h2 class="text-3xl text-[#496B90] text-center mb-16 font-light tracking-wide md:text-2xl">
+					Nuestros Productos
+				</h2>
+				<ProductGrid client:load />
+			</div>
+		</section>
+	</main>
+</Layout>

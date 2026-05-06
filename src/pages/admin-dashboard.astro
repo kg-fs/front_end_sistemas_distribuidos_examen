@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AdminHeader from '../components/AdminHeader.tsx';
+import AdminDashboard from '../components/AdminDashboard.tsx';
+---
+
+<Layout>
+	<AdminHeader client:load />
+	<AdminDashboard client:load />
+</Layout>
