@@ -7,6 +7,7 @@ interface Product {
   Price: number;
   Stock: number;
   Num_cat_state: number;
+  Image_url?: string;
 }
 
 const AdminProducts: React.FC = () => {
@@ -420,6 +421,7 @@ const AdminProducts: React.FC = () => {
           <thead>
             <tr className="border-b border-[#A2A09D]/20">
               <th className="text-left py-3 px-4 text-[#496B90] font-medium">ID</th>
+              <th className="text-left py-3 px-4 text-[#496B90] font-medium">Imagen</th>
               <th className="text-left py-3 px-4 text-[#496B90] font-medium">Nombre</th>
               <th className="text-left py-3 px-4 text-[#496B90] font-medium">Descripción</th>
               <th className="text-left py-3 px-4 text-[#496B90] font-medium">Precio</th>
@@ -430,9 +432,26 @@ const AdminProducts: React.FC = () => {
           </thead>
           <tbody>
             {searchResult ? (
-              <tr className="border-b border-[#A2A09D]/10 bg-blue-50">
-                <td className="py-3 px-4 text-[#496B90] font-semibold">{searchResult.Num_product}</td>
-                <td className="py-3 px-4 text-[#496B90] font-semibold">{searchResult.Name_product}</td>
+              <tr key={searchResult.Num_product} className="border-b border-[#A2A09D]/10 hover:bg-[#F8F8F8]">
+                <td className="py-3 px-4 text-[#496B90]">{searchResult.Num_product}</td>
+                <td className="py-3 px-4">
+                  {searchResult.Image_url ? (
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src={searchResult.Image_url} 
+                        alt={searchResult.Name_product}
+                        className="w-12 h-12 object-cover rounded-lg border border-[#A2A09D]/20 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                        onClick={() => window.open(searchResult.Image_url, '_blank')}
+                        title="Ver imagen completa"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg border border-[#A2A09D]/20 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">Sin imagen</span>
+                    </div>
+                  )}
+                </td>
+                <td className="py-3 px-4 text-[#496B90]">{searchResult.Name_product}</td>
                 <td className="py-3 px-4 text-[#A2A09D] text-sm">{searchResult.Description}</td>
                 <td className="py-3 px-4 text-[#D4AF37] font-medium">${parseFloat(String(searchResult.Price)).toFixed(2)}</td>
                 <td className="py-3 px-4 text-[#496B90]">{searchResult.Stock}</td>
@@ -501,6 +520,23 @@ const AdminProducts: React.FC = () => {
               products.map((product) => (
                 <tr key={product.Num_product} className="border-b border-[#A2A09D]/10 hover:bg-[#F8F8F8]">
                   <td className="py-3 px-4 text-[#496B90]">{product.Num_product}</td>
+                  <td className="py-3 px-4">
+                    {product.Image_url ? (
+                      <div className="flex items-center justify-center">
+                        <img 
+                          src={product.Image_url} 
+                          alt={product.Name_product}
+                          className="w-12 h-12 object-cover rounded-lg border border-[#A2A09D]/20 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                          onClick={() => window.open(product.Image_url, '_blank')}
+                          title="Ver imagen completa"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg border border-[#A2A09D]/20 flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">Sin imagen</span>
+                      </div>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-[#496B90]">{product.Name_product}</td>
                   <td className="py-3 px-4 text-[#A2A09D] text-sm">{product.Description}</td>
                   <td className="py-3 px-4 text-[#D4AF37] font-medium">${parseFloat(String(product.Price)).toFixed(2)}</td>
