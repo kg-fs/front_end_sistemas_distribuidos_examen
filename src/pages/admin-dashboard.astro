@@ -2,9 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import AdminHeader from '../components/AdminHeader.tsx';
 import AdminDashboard from '../components/AdminDashboard.tsx';
+import SessionManager from '../components/SessionManager.tsx';
 ---
 
 <Layout>
-	<AdminHeader client:load />
-	<AdminDashboard client:load />
+	<SessionManager client:load>
+		<AdminHeader client:load />
+		<AdminDashboard client:load />
+	</SessionManager>
 </Layout>

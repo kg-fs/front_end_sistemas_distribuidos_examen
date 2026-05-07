@@ -21,15 +21,20 @@ const AuthPage: React.FC = () => {
       const user = JSON.parse(savedUser);
       if (user.isLoggedIn) {
         // Redirigir según el rol del usuario ya logueado
-        const userRole = user.role;
+        const userRole = user.Num_rol || user.role;
         const roleNum = parseInt(userRole);
         
+        console.log('Usuario logueado detectado, rol:', userRole, 'roleNum:', roleNum);
+        
         if (roleNum === 1 || roleNum === 3 || userRole === 'Administrador' || userRole === 'Empleado') {
+          console.log('Redirigiendo a admin-dashboard');
           window.location.href = '/admin-dashboard';
         } else if (roleNum === 2 || userRole === 'Cliente') {
+          console.log('Redirigiendo a dashboard');
           window.location.href = '/dashboard';
         } else {
-          window.location.href = '/';
+          console.log('Rol no reconocido, permaneciendo en auth');
+          // No redirigir, dejar al usuario en la página de auth
         }
       }
     }
@@ -69,13 +74,19 @@ const AuthPage: React.FC = () => {
         console.log('NUM_ROL DEL USUARIO:', userData.user.Num_rol);
         console.log('EMAIL DEL USUARIO:', formData.email);
         
-        // Guardar email, Num_rol e ID del usuario en localStorage
-        localStorage.setItem('user', JSON.stringify({
+        // Guardar datos completos del usuario en localStorage
+        const userDataToStore = {
           id: userData.user.Num_user,
           email: formData.email,
           Num_rol: userData.user.Num_rol,
-          isLoggedIn: true
-        }));
+          Firs_name_user: userData.user.Firs_name_user,
+          Last_name_user: userData.user.Last_name_user,
+          isLoggedIn: true,
+          loginTimestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userDataToStore));
+        console.log('Usuario guardado en localStorage:', userDataToStore);
 
         setSuccess('¡Inicio de sesión exitoso!');
         
@@ -134,7 +145,69 @@ const AuthPage: React.FC = () => {
       });
 
       if (response.ok) {
-        setSuccess('¡Cuenta creada exitosamente! Redirigiendo al login...');
+        const userData = await response.json();
+        console.log('Usuario creado:', userData);
+        
+        // Obtener el ID del usuario creado
+        const userId = userData.insertId || userData.user?.Num_user || userData.Num_user || userData.id;
+        
+        if (!userId) {
+          console.error('No se pudo obtener el ID del usuario:', userData);
+          setError('Error al obtener ID del usuario creado');
+          setLoading(false);
+          return;
+        }
+
+        console.log('ID del usuario creado:', userId);
+        
+        // Crear carrito para el usuario
+        try {
+          console.log('🛒 Iniciando creación de carrito para usuario ID:', userId);
+          console.log('📡 Enviando request a: http://177.7.42.180:3000/api/cart/');
+          console.log('📋 Headers: Content-Type: application/json, x-user-id:', userId);
+          
+          const cartResponse = await fetch('http://177.7.42.180:3000/api/cart/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': userId.toString()
+            }
+          });
+
+          console.log('📡 Response status:', cartResponse.status);
+          console.log('📡 Response headers:', [...cartResponse.headers.entries()]);
+          
+          const responseText = await cartResponse.text();
+          console.log('📄 Response body:', responseText);
+
+          if (cartResponse.ok) {
+            console.log('✅ Carrito creado exitosamente para el usuario:', userId);
+            try {
+              const cartData = JSON.parse(responseText);
+              console.log('📊 Datos del carrito:', cartData);
+            } catch (e) {
+              console.log('⚠️ Response no es JSON válido:', responseText);
+            }
+            setSuccess('¡Cuenta y carrito creados exitosamente! Redirigiendo al login...');
+          } else {
+            console.error('❌ Error al crear carrito. Status:', cartResponse.status);
+            try {
+              const cartError = JSON.parse(responseText);
+              console.error('📄 Error details:', cartError);
+              setError(`Error al crear carrito: ${cartError.message || 'Error desconocido'}`);
+            } catch (e) {
+              console.error('⚠️ Error response no es JSON:', responseText);
+              setError(`Error al crear carrito: ${responseText}`);
+            }
+            setSuccess('¡Cuenta creada! (Error al crear carrito, pero puedes continuar) Redirigiendo al login...');
+          }
+        } catch (cartError) {
+          console.error('❌ Error de conexión al crear carrito:', cartError);
+          const errorMessage = cartError instanceof Error ? cartError.message : 'Error desconocido';
+          setError(`Error de conexión al crear carrito: ${errorMessage}`);
+          setSuccess('¡Cuenta creada! (Error al crear carrito, pero puedes continuar) Redirigiendo al login...');
+        }
+
         setTimeout(() => {
           setIsLogin(true);
           setFormData({ firstName: '', lastName: '', emailPrefix: '', email: '', password: '', confirmPassword: '' });

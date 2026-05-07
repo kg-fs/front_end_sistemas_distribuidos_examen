@@ -73,6 +73,20 @@ const AdminProducts: React.FC = () => {
     fetchProducts();
   }, []);
 
+  // Prevenir doble scroll cuando se abren/cierran las modales
+  useEffect(() => {
+    if (isModalOpen || isEditModalOpen || isStockModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Limpiar cuando se desmonta el componente
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen, isEditModalOpen, isStockModalOpen]);
+
   const fetchProducts = async () => {
     try {
       console.log('Iniciando fetchProducts');

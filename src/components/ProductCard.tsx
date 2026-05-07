@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ImageSkeleton from './ImageSkeleton';
 
 interface Product {
   Num_product: number;
@@ -17,20 +18,39 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true);
+  };
+
   return (
     <div className="bg-white border border-[#A2A09D]/20 rounded-lg overflow-hidden transition-all duration-200 hover:shadow-sm">
-      <div className="h-48 overflow-hidden bg-[#F8F8F8] flex items-center justify-center">
-        {product.Image_url ? (
-          <img 
-            src={product.Image_url} 
-            alt={product.Name_product}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+      <div className="h-48 overflow-hidden bg-[#F8F8F8] flex items-center justify-center relative">
+        {product.Image_url && !imageError ? (
+          <>
+            {!imageLoaded && <ImageSkeleton className="absolute inset-0" />}
+            <img 
+              src={product.Image_url} 
+              alt={product.Name_product}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </>
         ) : (
-          <div className="text-[#A2A09D] text-sm">Sin imagen</div>
+          <div className="text-[#A2A09D] text-sm">
+            {imageError ? 'Error al cargar imagen' : 'Sin imagen'}
+          </div>
         )}
       </div>
       <div className="p-6">

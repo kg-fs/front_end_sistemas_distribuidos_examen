@@ -36,6 +36,20 @@ const AdminUsers: React.FC = () => {
     fetchUsers();
   }, []);
 
+  // Prevenir doble scroll cuando se abre/cierra la modal
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Limpiar cuando se desmonta el componente
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen]);
+
   const fetchUsers = async () => {
     try {
       console.log('Iniciando fetchUsers');

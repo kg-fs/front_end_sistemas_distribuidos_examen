@@ -1,12 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.tsx';
+import HeaderClient from '../components/HeaderClient.tsx';
 import ProductGridClient from '../components/ProductGridClient.tsx';
+import SessionManager from '../components/SessionManager.tsx';
 ---
 
 <Layout>
-	<Header client:load />
-	<main class="min-h-screen">
+	<SessionManager client:load>
+		<HeaderClient client:load />
+		<main class="min-h-screen">
 		<section class="py-16 bg-white">
 			<div class="max-w-6xl mx-auto px-6">
 				<h2 class="text-3xl text-[#496B90] text-center mb-16 font-light tracking-wide md:text-2xl">
@@ -16,4 +18,5 @@ import ProductGridClient from '../components/ProductGridClient.tsx';
 			</div>
 		</section>
 	</main>
+	</SessionManager>
 </Layout>

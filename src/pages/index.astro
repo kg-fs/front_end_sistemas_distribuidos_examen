@@ -4,11 +4,13 @@ import Header from '../components/Header.tsx';
 import Hero from '../components/Hero.astro';
 import ProductGrid from '../components/ProductGrid.tsx';
 import About from '../components/About.tsx';
+import SessionManager from '../components/SessionManager.tsx';
 ---
 
 <Layout>
-	<Header client:load />
-	<main class="min-h-screen">
+	<SessionManager client:load>
+		<Header client:load />
+		<main class="min-h-screen">
 		<Hero />
 		
 		<!-- Sección About -->
@@ -24,4 +26,5 @@ import About from '../components/About.tsx';
 			</div>
 		</section>
 	</main>
+	</SessionManager>
 </Layout>

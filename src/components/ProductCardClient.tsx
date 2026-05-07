@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ImageSkeleton from './ImageSkeleton';
 
 interface Product {
   Num_product: number;
@@ -19,41 +20,98 @@ interface ProductCardClientProps {
 const ProductCardClient: React.FC<ProductCardClientProps> = ({ product }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  const handleAddToCart = () => {
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true);
+  };
+
+  const handleAddToCart = async () => {
+    if (typeof window === 'undefined') return;
+    
     setIsAdding(true);
     
-    // Simulación de añadir al carrito
-    setTimeout(() => {
+    try {
+      // Obtener el userId del localStorage
+      const savedUser = localStorage.getItem('user');
+      if (!savedUser) {
+        console.error('No hay usuario autenticado');
+        setIsAdding(false);
+        return;
+      }
+      
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user.userId;
+      
+      if (!userId) {
+        console.error('No se encontró el ID del usuario');
+        setIsAdding(false);
+        return;
+      }
+      
+      // Hacer la petición POST al backend
+      const response = await fetch('http://177.7.42.180:3000/api/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId.toString()
+        },
+        body: JSON.stringify({
+          num_product: product.Num_product,
+          quantity: 1
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al agregar al carrito: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Producto agregado al carrito:', result);
+      
       setIsAdding(false);
       setAdded(true);
-      
-      // Actualizar contador del carrito en el header
-      const cartCount = parseInt(localStorage.getItem('cartCount') || '0');
-      localStorage.setItem('cartCount', (cartCount + 1).toString());
       
       // Disparar evento para actualizar el header
       window.dispatchEvent(new Event('cartUpdated'));
       
       // Resetear el estado después de 2 segundos
       setTimeout(() => setAdded(false), 2000);
-    }, 1000);
+      
+    } catch (error) {
+      console.error('Error al agregar producto al carrito:', error);
+      setIsAdding(false);
+      // Aquí podrías mostrar un mensaje de error al usuario
+    }
   };
 
   return (
     <div className="bg-white border border-[#A2A09D]/20 rounded-lg overflow-hidden transition-all duration-200 hover:shadow-sm">
-      <div className="h-48 overflow-hidden bg-[#F8F8F8] flex items-center justify-center">
-        {product.Image_url ? (
-          <img 
-            src={product.Image_url} 
-            alt={product.Name_product}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+      <div className="h-48 overflow-hidden bg-[#F8F8F8] flex items-center justify-center relative">
+        {product.Image_url && !imageError ? (
+          <>
+            {!imageLoaded && <ImageSkeleton className="absolute inset-0" />}
+            <img 
+              src={product.Image_url} 
+              alt={product.Name_product}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </>
         ) : (
-          <div className="text-[#A2A09D] text-sm">Sin imagen</div>
+          <div className="text-[#A2A09D] text-sm">
+            {imageError ? 'Error al cargar imagen' : 'Sin imagen'}
+          </div>
         )}
       </div>
       <div className="p-6">
