@@ -1,11 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import CartModal from './CartModal';
+import PickupOrdersModal from './PickupOrdersModal';
+import PaymentsModal from './PaymentsModal';
 
 const HeaderClient: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [pickupOrdersCount, setPickupOrdersCount] = useState(0);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isPickupOrdersModalOpen, setIsPickupOrdersModalOpen] = useState(false);
+  const [isPaymentsModalOpen, setIsPaymentsModalOpen] = useState(false);
+
+  // Obtener contador de pedidos pendientes de retiro desde el backend
+  const fetchPickupOrdersCount = async () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Obtener el userId del localStorage
+      const savedUser = localStorage.getItem('user');
+      if (!savedUser) {
+        setPickupOrdersCount(0);
+        return;
+      }
+      
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user.userId;
+      
+      if (!userId) {
+        setPickupOrdersCount(0);
+        return;
+      }
+      
+      // Hacer la petición GET al backend para obtener los pedidos pendientes de retiro
+      const response = await fetch('http://177.7.42.180:3000/api/pickup/user', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId.toString()
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al obtener pedidos pendientes: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      // Usar el array pickups de la respuesta del backend
+      const pendingOrders = result.pickups || [];
+      // Contar pedidos con estado 'pendiente' o similar
+      const pendingCount = pendingOrders.filter((order: any) => 
+        order.Status === 'pendiente' || 
+        order.Status === 'pending' ||
+        order.Status === 'listo_para_retiro'
+      ).length;
+      
+      setPickupOrdersCount(pendingCount);
+      
+    } catch (error) {
+      console.error('Error al obtener contador de pedidos pendientes:', error);
+      setPickupOrdersCount(0);
+    }
+  };
 
   // Obtener contador del carrito desde el backend
   const fetchCartCount = async () => {
@@ -67,6 +123,8 @@ const HeaderClient: React.FC = () => {
         setIsLoggedIn(true);
         // Cargar contador del carrito cuando el usuario está logueado
         fetchCartCount();
+        // Cargar contador de pedidos pendientes de retiro
+        fetchPickupOrdersCount();
       }
     }
 
@@ -75,10 +133,17 @@ const HeaderClient: React.FC = () => {
       fetchCartCount();
     };
 
+    // Escuchar eventos de actualización de pedidos
+    const handleOrdersUpdate = () => {
+      fetchPickupOrdersCount();
+    };
+
     window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('ordersUpdated', handleOrdersUpdate);
     
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('ordersUpdated', handleOrdersUpdate);
     };
   }, []);
 
@@ -88,6 +153,14 @@ const HeaderClient: React.FC = () => {
 
   const handleCartClick = () => {
     setIsCartModalOpen(true);
+  };
+
+  const handlePickupOrdersClick = () => {
+    setIsPickupOrdersModalOpen(true);
+  };
+
+  const handlePaymentsClick = () => {
+    setIsPaymentsModalOpen(true);
   };
 
   const handleLogout = () => {
@@ -112,6 +185,9 @@ const HeaderClient: React.FC = () => {
             <div className="flex flex-col">
               <h1 className="m-0 text-[#496B90] text-3xl font-light tracking-wide">Floralia</h1>
               <p className="m-0 text-[#A2A09D] text-xs tracking-wider uppercase">flores y arreglos</p>
+              {isLoggedIn && user?.email && (
+                <p className="m-0 text-[#496B90] text-sm mt-2">{user.email}</p>
+              )}
             </div>
           </div>
           <nav className="nav">
@@ -121,11 +197,28 @@ const HeaderClient: React.FC = () => {
                   <span className="text-[#496B90] text-sm font-medium">
                     {user?.name}
                   </span>
-                  <br />
-                  <span className="text-[#A2A09D] text-xs">
-                    {user?.email}
-                  </span>
                 </div>
+                
+                {/* Pedidos Pendientes de Retiro - Texto Botón */}
+                <button
+                  onClick={handlePickupOrdersClick}
+                  className="text-[#D4AF37] hover:text-[#B8941F] font-medium text-sm transition-colors duration-200 relative"
+                >
+                  Pedidos Pendientes
+                  {pickupOrdersCount > 0 && (
+                    <span className="absolute -top-2 -right-3 bg-[#E74C3C] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]">
+                      {pickupOrdersCount}
+                    </span>
+                  )}
+                </button>
+                
+                {/* Pagos Realizados - Texto Botón */}
+                <button
+                  onClick={handlePaymentsClick}
+                  className="text-[#496B90] hover:text-[#3A5270] font-medium text-sm transition-colors duration-200"
+                >
+                  Pagos Realizados
+                </button>
                 
                 {/* Carrito */}
                 <div className="relative">
@@ -167,6 +260,18 @@ const HeaderClient: React.FC = () => {
       <CartModal 
         isOpen={isCartModalOpen} 
         onClose={() => setIsCartModalOpen(false)} 
+      />
+      
+      {/* Modal de Pedidos Pendientes de Retiro */}
+      <PickupOrdersModal 
+        isOpen={isPickupOrdersModalOpen} 
+        onClose={() => setIsPickupOrdersModalOpen(false)} 
+      />
+      
+      {/* Modal de Pagos Realizados */}
+      <PaymentsModal 
+        isOpen={isPaymentsModalOpen} 
+        onClose={() => setIsPaymentsModalOpen(false)} 
       />
     </>
   );
